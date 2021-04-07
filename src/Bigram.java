@@ -12,22 +12,22 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-public class Main {
+public class Bigram {
 
 	public static void main(String[] args) {	
 		/*
-		 * This treemap maps pairs of words to words that can come after
+		 * This treemap maps words to words that can come after
 		 */
-		TreeMap<String,List<String>> trigramMap = new TreeMap<String,List<String>>();
+		TreeMap<String,List<String>> bigramMap = new TreeMap<String,List<String>>();
 		FileReader fileReader;
 		String str = "";
 		try {
-			fileReader = new FileReader(new File("chrisNegoon.txt"));
+			fileReader = new FileReader(new File("inputText.txt"));
 			BufferedReader reader = new BufferedReader(fileReader);
 			String s = reader.readLine();
 			
 			while(s != null) {
-				str = str + s + "\n";
+				str = str + s + " ";
 				s = reader.readLine();
 			}
 		} catch (IOException e) {
@@ -36,36 +36,35 @@ public class Main {
 		}
 		
 		StringTokenizer tokenizer = new StringTokenizer(str);
-		//The current first and second word.
-		String first = null, second = null;
+		//The current first word
+		String first = null;
 		int wordCount = 0;
+		
 		while(tokenizer.hasMoreTokens()) {
-			if(first == null)first = tokenizer.nextToken().toLowerCase();
-			else if(second == null)second = tokenizer.nextToken().toLowerCase();
+			String token = tokenizer.nextToken().toLowerCase();
+			if(first == null)first = token;
 			else{
-				String newStr = first + " " + second;
 				
-				String third = tokenizer.nextToken().toLowerCase();
+				String second = token;
 				
-				if(trigramMap.get(newStr) != null) {
-					List<String> mappedList = trigramMap.get(newStr);
-					mappedList.add(third);
+				if(bigramMap.get(first) != null) {
+					List<String> mappedList = bigramMap.get(first);
+					mappedList.add(second);
 				}
 				else {
 					List<String> mappedList = new LinkedList<String>();
-					mappedList.add(third);
-					trigramMap.put(newStr, mappedList);
+					mappedList.add(second);
+					bigramMap.put(first, mappedList);
 				}
 				
 				//Update the first and second string
 				first = second;
-				second = third;
 			}
 			++wordCount;
 		}
 		
-		int count = wordCount;
-		Set<String> setArray = trigramMap.keySet();
+		int count = 100;
+		Set<String> setArray = bigramMap.keySet();
 		List<String> keyList = new ArrayList<String>();
 		for(String thisString : setArray)keyList.add(thisString);
 		String newSentence;
@@ -80,25 +79,49 @@ public class Main {
 		//firstWord = was
 		//secondWord = dark
 		//was dark
-		
-		//This is the second word so that we can generate the next pair
-		String firstWord = words.substring(words.indexOf(' ') + 1);
+
 		newSentence = words;
 		for(int i = 0;i < count;++i) {
-			List<String> nextList = trigramMap.get(words);
+			
+			List<String> nextList = bigramMap.get(words);
+			
+			//If we find a word that has nothing after, add a period and move on...
 			if(nextList == null) {
-				System.out.println("Break early");
-				break;
+				randIndex = (int)(Math.random() * keyList.size());
+				//This is the current pair of two words.
+				words = keyList.get(randIndex);
+				
+				newSentence = newSentence + ". " + words;
+				continue;
 			}
 			randIndex = (int)(Math.random() * nextList.size());
 			String secondWord = nextList.get(randIndex);
 
 			
-			words = firstWord + " " + secondWord;
-			newSentence = newSentence + " " + secondWord;
 			
-			//Advancing the first word to be the next one
-			firstWord = secondWord;
+			
+			
+			//Add a newline after every 15 words ish..
+			if(((i + 1) % 16) == 0) {
+				newSentence = newSentence + "\n";
+			}
+			//Otherwise add a space...
+			else {
+				newSentence = newSentence + " ";
+			}
+			newSentence = newSentence + secondWord;
+			
+			
+			if(secondWord.endsWith(".") || secondWord.endsWith("?") || secondWord.endsWith("!")) {
+				randIndex = (int)(Math.random() * keyList.size());
+				//This is the current pair of two words.
+				words = keyList.get(randIndex);
+				
+				newSentence = newSentence + " " + words;
+				continue;
+			}
+			
+			words = secondWord;
 		}
 		newSentence = newSentence + ".";
 
